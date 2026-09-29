@@ -1,0 +1,7 @@
+*
+!private/
+!public/
+!templates/
+!templates/banks/
+!templates/banks/*.docx
+!.gitignore
