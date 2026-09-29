@@ -61,6 +61,16 @@ jobs:
           DB_PASSWORD: leaveflow_password
         run: php artisan migrate --force
 
+      - name: Seed test database
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: leaveflow_test
+          DB_USERNAME: leaveflow
+          DB_PASSWORD: leaveflow_password
+        run: php artisan db:seed --force
+
       - name: Run Laravel tests
         env:
           DB_CONNECTION: mysql
