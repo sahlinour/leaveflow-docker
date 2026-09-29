@@ -71,9 +71,6 @@ jobs:
           name: frontend-build
           path: public/build
 
-      - name: Run migrations
-        run: php artisan migrate --force
-
       - name: Run Laravel tests
         run: php artisan test
 
