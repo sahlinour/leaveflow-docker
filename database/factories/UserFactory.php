@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Company;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -34,8 +36,8 @@ class UserFactory extends Factory
             'poste' => 'Employé',
             'date_embauche' => now(),
             'statut' => 'actif',
-            'role_id' => 2,
-            'company_id' => 1,
+            'role_id' => Role::where('slug', 'employe')->value('id'),
+            'company_id' => Company::firstOrFail()->id,
             'remember_token' => Str::random(10),
         ];
     }

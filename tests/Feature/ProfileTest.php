@@ -18,7 +18,8 @@ test('profile information can be updated', function () {
     $response = $this
         ->actingAs($user)
         ->patch('/profile', [
-            'name' => 'Test User',
+            'prenom' => 'Test',
+            'nom' => 'User',
             'email' => 'test@example.com',
         ]);
 
@@ -28,7 +29,8 @@ test('profile information can be updated', function () {
 
     $user->refresh();
 
-    $this->assertSame('Test User', $user->name);
+    $this->assertSame('Test', $user->prenom);
+    $this->assertSame('User', $user->nom);
     $this->assertSame('test@example.com', $user->email);
     $this->assertNull($user->email_verified_at);
 });
@@ -39,7 +41,8 @@ test('email verification status is unchanged when the email address is unchanged
     $response = $this
         ->actingAs($user)
         ->patch('/profile', [
-            'name' => 'Test User',
+            'prenom' => 'Test',
+            'nom' => 'User',
             'email' => $user->email,
         ]);
 
@@ -64,7 +67,10 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    $this->assertNull($user->fresh());
+
+    $user->refresh();
+
+    $this->assertTrue($user->trashed());
 });
 
 test('correct password must be provided to delete account', function () {
@@ -81,5 +87,5 @@ test('correct password must be provided to delete account', function () {
         ->assertSessionHasErrors('password')
         ->assertRedirect('/profile');
 
-    $this->assertNotNull($user->fresh());
+    $this->assertAuthenticatedAs($user);
 });

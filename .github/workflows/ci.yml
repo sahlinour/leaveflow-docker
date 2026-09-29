@@ -11,75 +11,6 @@ on:
       - develop
 
 jobs:
-  laravel-tests:
-    name: Laravel Tests
-    runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: leaveflow_test
-          MYSQL_USER: leaveflow
-          MYSQL_PASSWORD: leaveflow_password
-          MYSQL_ROOT_PASSWORD: root_password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, bcmath, pdo_mysql, zip, gd
-          coverage: none
-
-      - name: Copy environment file
-        run: cp .env.example .env
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Generate application key
-        run: php artisan key:generate
-
-      - name: Run migrations
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: leaveflow_test
-          DB_USERNAME: leaveflow
-          DB_PASSWORD: leaveflow_password
-        run: php artisan migrate --force
-
-      - name: Seed test database
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: leaveflow_test
-          DB_USERNAME: leaveflow
-          DB_PASSWORD: leaveflow_password
-        run: php artisan db:seed --force
-
-      - name: Run Laravel tests
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: leaveflow_test
-          DB_USERNAME: leaveflow
-          DB_PASSWORD: leaveflow_password
-        run: php artisan test
 
   frontend:
     name: Frontend Build
@@ -101,16 +32,68 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-  docker:
-    name: Docker Build
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build
+
+
+  laravel-tests:
+    name: Laravel Tests
     runs-on: ubuntu-latest
     needs:
-      - laravel-tests
       - frontend
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, bcmath, pdo_mysql, zip, gd
+          coverage: none
+
+      - name: Copy environment file
+        run: cp .env.example .env
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run Laravel tests
+        run: php artisan test
+
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs:
+      - frontend
+      - laravel-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build
 
       - name: Build Docker image
         run: docker build -t leaveflow:ci .
